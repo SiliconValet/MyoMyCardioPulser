@@ -1527,4 +1527,3 @@ const char PULSER_HTML[] PROGMEM = R"rawliteral(
 
 </html>
 )rawliteral";
-

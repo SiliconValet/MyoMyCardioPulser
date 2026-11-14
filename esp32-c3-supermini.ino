@@ -5,7 +5,8 @@
  * Plug-and-Go Operation:
  *   1. Connect to Wi-Fi SSID "MyoPulser-C3" (Password: "pacing1234")
  *   2. Navigate to http://192.168.4.1 or http://myopulser.local
- *   3. Operates completely standalone (or simultaneously over USB CDC Serial @ 115200 baud)
+ *   3. Operates completely standalone (or simultaneously over USB CDC Serial @
+ * 115200 baud)
  *
  * Pinout:
  *   GPIO 2 -> L298N IN1 (Polarity Direction A)
@@ -16,12 +17,12 @@
  * In Arduino IDE: Tools -> "USB CDC On Boot" -> "Enabled"!
  */
 
+#include "pulser_html.h"
 #include <Arduino.h>
-#include <WiFi.h>
-#include <WebServer.h>
 #include <DNSServer.h>
 #include <ESPmDNS.h>
-#include "pulser_html.h"
+#include <WebServer.h>
+#include <WiFi.h>
 
 // --- Hardware Pin Definitions ---
 const int PIN_IN1 = 2;
@@ -44,15 +45,17 @@ enum PulseType {
   TYPE_BIPHASIC = 0,    // Anodic (+V) first half, Cathodic (-V) second half
   TYPE_POLYPHASIC = 1,  // High-frequency AC polarity flipping during pulse
   TYPE_ALTERNATING = 2, // Alternates +V and -V on consecutive pulses
-  TYPE_MONOPHASIC = 3   // Single polarity (+V) - use with caution (electrolysis risk)
+  TYPE_MONOPHASIC =
+      3 // Single polarity (+V) - use with caution (electrolysis risk)
 };
 
 struct PacerConfig {
   PacingMode mode = MODE_STOPPED;
   PulseType type = TYPE_BIPHASIC;
   uint32_t pulseWidthUs = 10000; // Default: 10 ms (10,000 us)
-  uint32_t gapMs = 990;          // Default: 990 ms (total period = 1000 ms = 1.0 Hz)
-  uint32_t polyHalfPeriodUs = 500; // 500 us half-period (1 kHz AC in polyphasic mode)
+  uint32_t gapMs = 990; // Default: 990 ms (total period = 1000 ms = 1.0 Hz)
+  uint32_t polyHalfPeriodUs =
+      500; // 500 us half-period (1 kHz AC in polyphasic mode)
   uint32_t randPulseMinMs = 5;
   uint32_t randPulseMaxMs = 20;
   uint32_t randGapMinMs = 400;
@@ -119,7 +122,8 @@ inline void setBridgeCathodic() {
 
 /**
  * Executes a single blocking stimulation pulse with microsecond accuracy.
- * Blocking during the 1-200 ms pulse guarantees zero USB/OS/Wi-Fi jitter on pulse width.
+ * Blocking during the 1-200 ms pulse guarantees zero USB/OS/Wi-Fi jitter on
+ * pulse width.
  */
 void fireSinglePulse(uint32_t durationUs) {
   uint32_t startUs = micros();
@@ -189,15 +193,13 @@ void fireSinglePulse(uint32_t durationUs) {
       (cfg.type == TYPE_ALTERNATING) ? (alternatingPolarityState ? -1 : 1) : 1;
 
   // Record into ring buffer for HTTP web clients
-  telemBuffer[telemHead] = {
-      (uint32_t)totalPulseCount,
-      startMs - (uint32_t)sessionStartTimeMs,
-      actualDurationUs,
-      currentTargetGapMs,
-      (uint8_t)cfg.type,
-      firedPolarity,
-      (uint16_t)cfg.polyHalfPeriodUs
-  };
+  telemBuffer[telemHead] = {(uint32_t)totalPulseCount,
+                            startMs - (uint32_t)sessionStartTimeMs,
+                            actualDurationUs,
+                            currentTargetGapMs,
+                            (uint8_t)cfg.type,
+                            firedPolarity,
+                            (uint16_t)cfg.polyHalfPeriodUs};
   telemHead = (telemHead + 1) % TELEM_BUFFER_SIZE;
 
   // Emit lightweight JSON telemetry event over USB Serial
@@ -218,7 +220,8 @@ void fireSinglePulse(uint32_t durationUs) {
   Serial.println("}");
   Serial.flush();
 
-  // Hold LED on for 80 ms AFTER the pulse completes so human eye clearly perceives the flash
+  // Hold LED on for 80 ms AFTER the pulse completes so human eye clearly
+  // perceives the flash
   ledOffTimeMs = millis() + 80;
 }
 
@@ -346,8 +349,7 @@ void handleSerialCommand(const String &cmd) {
     if (targetMode != MODE_STOPPED && cfg.mode == MODE_STOPPED) {
       if (totalPulseCount == 0)
         sessionStartTimeMs = millis();
-      lastPulseTimestampMs =
-          millis() - cfg.gapMs;
+      lastPulseTimestampMs = millis() - cfg.gapMs;
       currentTargetGapMs = cfg.gapMs;
     }
     cfg.mode = targetMode;
@@ -367,9 +369,8 @@ void handleSerialCommand(const String &cmd) {
 // --- HTTP REST Handlers ---
 void setupHttpRoutes() {
   // 1. Deliver the full offline dashboard HTML from flash
-  server.on("/", HTTP_GET, []() {
-    server.send_P(200, "text/html", PULSER_HTML);
-  });
+  server.on("/", HTTP_GET,
+            []() { server.send_P(200, "text/html", PULSER_HTML); });
 
   // 2. Captive Portal Redirects for Apple, Android & Windows
   server.on("/hotspot-detect.html", HTTP_GET, []() {
@@ -394,7 +395,8 @@ void setupHttpRoutes() {
 
   // 4. API: Telemetry polling
   server.on("/api/telemetry", HTTP_GET, []() {
-    uint32_t lastId = server.hasArg("last_id") ? server.arg("last_id").toInt() : 0;
+    uint32_t lastId =
+        server.hasArg("last_id") ? server.arg("last_id").toInt() : 0;
     String json = "{\"mode\":" + String((int)cfg.mode) +
                   ",\"count\":" + String((unsigned long)totalPulseCount) +
                   ",\"pulses\":[";
@@ -402,7 +404,8 @@ void setupHttpRoutes() {
     for (int i = 0; i < TELEM_BUFFER_SIZE; i++) {
       int idx = (telemHead - 1 - i + TELEM_BUFFER_SIZE) % TELEM_BUFFER_SIZE;
       if (telemBuffer[idx].id > lastId && telemBuffer[idx].id != 0) {
-        if (!first) json += ",";
+        if (!first)
+          json += ",";
         json += "{\"id\":" + String(telemBuffer[idx].id) +
                 ",\"t_ms\":" + String(telemBuffer[idx].t_ms) +
                 ",\"dur_us\":" + String(telemBuffer[idx].dur_us) +
@@ -421,14 +424,22 @@ void setupHttpRoutes() {
   server.on("/api/config", HTTP_GET, []() {
     if (server.hasArg("mode")) {
       int newMode = server.arg("mode").toInt();
-      int newType = server.hasArg("type") ? server.arg("type").toInt() : (int)cfg.type;
-      long pUs = server.hasArg("pulse_us") ? server.arg("pulse_us").toInt() : cfg.pulseWidthUs;
-      long gMs = server.hasArg("gap_ms") ? server.arg("gap_ms").toInt() : cfg.gapMs;
-      long polyUs = server.hasArg("poly_us") ? server.arg("poly_us").toInt() : cfg.polyHalfPeriodUs;
-      long rPMin = server.hasArg("rp_min") ? server.arg("rp_min").toInt() : cfg.randPulseMinMs;
-      long rPMax = server.hasArg("rp_max") ? server.arg("rp_max").toInt() : cfg.randPulseMaxMs;
-      long rGMin = server.hasArg("rg_min") ? server.arg("rg_min").toInt() : cfg.randGapMinMs;
-      long rGMax = server.hasArg("rg_max") ? server.arg("rg_max").toInt() : cfg.randGapMaxMs;
+      int newType =
+          server.hasArg("type") ? server.arg("type").toInt() : (int)cfg.type;
+      long pUs = server.hasArg("pulse_us") ? server.arg("pulse_us").toInt()
+                                           : cfg.pulseWidthUs;
+      long gMs =
+          server.hasArg("gap_ms") ? server.arg("gap_ms").toInt() : cfg.gapMs;
+      long polyUs = server.hasArg("poly_us") ? server.arg("poly_us").toInt()
+                                             : cfg.polyHalfPeriodUs;
+      long rPMin = server.hasArg("rp_min") ? server.arg("rp_min").toInt()
+                                           : cfg.randPulseMinMs;
+      long rPMax = server.hasArg("rp_max") ? server.arg("rp_max").toInt()
+                                           : cfg.randPulseMaxMs;
+      long rGMin = server.hasArg("rg_min") ? server.arg("rg_min").toInt()
+                                           : cfg.randGapMinMs;
+      long rGMax = server.hasArg("rg_max") ? server.arg("rg_max").toInt()
+                                           : cfg.randGapMaxMs;
 
       cfg.type = (PulseType)constrain(newType, 0, 3);
       cfg.pulseWidthUs = constrain(pUs, 500, 200000);
@@ -452,17 +463,20 @@ void setupHttpRoutes() {
         setBridgeHighZ();
       }
     }
-    server.send(200, "application/json", "{\"event\":\"ack\",\"status\":\"ok\"}");
+    server.send(200, "application/json",
+                "{\"event\":\"ack\",\"status\":\"ok\"}");
   });
 
   // 6. API: Manual Pulse
   server.on("/api/manual", HTTP_GET, []() {
-    uint32_t pUs = server.hasArg("pulse_us") ? server.arg("pulse_us").toInt() : cfg.pulseWidthUs;
+    uint32_t pUs = server.hasArg("pulse_us") ? server.arg("pulse_us").toInt()
+                                             : cfg.pulseWidthUs;
     pUs = constrain(pUs, 500, 200000);
     if (sessionStartTimeMs == 0)
       sessionStartTimeMs = millis();
     fireSinglePulse(pUs);
-    server.send(200, "application/json", "{\"event\":\"ack\",\"status\":\"fired\"}");
+    server.send(200, "application/json",
+                "{\"event\":\"ack\",\"status\":\"fired\"}");
   });
 
   // 7. API: Reset
@@ -471,7 +485,8 @@ void setupHttpRoutes() {
     setBridgeHighZ();
     totalPulseCount = 0;
     sessionStartTimeMs = millis();
-    server.send(200, "application/json", "{\"event\":\"ack\",\"status\":\"reset\"}");
+    server.send(200, "application/json",
+                "{\"event\":\"ack\",\"status\":\"reset\"}");
   });
 
   // 8. API: Ping
@@ -486,20 +501,28 @@ void setupHttpRoutes() {
   server.on("/api/led_test", HTTP_GET, []() {
     setStatusLed(true);
     ledOffTimeMs = millis() + 1500;
-    server.send(200, "application/json", "{\"event\":\"led_status\",\"pin\":" + String(pinLed) + ",\"active_low\":" + String(ledActiveLow ? 1 : 0) + "}");
+    server.send(200, "application/json",
+                "{\"event\":\"led_status\",\"pin\":" + String(pinLed) +
+                    ",\"active_low\":" + String(ledActiveLow ? 1 : 0) + "}");
   });
 
   // 10. API: Config LED
   server.on("/api/led_config", HTTP_GET, []() {
-    if (server.hasArg("pin")) pinLed = server.arg("pin").toInt();
-    if (server.hasArg("active_low")) ledActiveLow = (server.arg("active_low").toInt() != 0);
+    if (server.hasArg("pin"))
+      pinLed = server.arg("pin").toInt();
+    if (server.hasArg("active_low"))
+      ledActiveLow = (server.arg("active_low").toInt() != 0);
     setStatusLed(false);
     pinMode(pinLed, OUTPUT);
     for (int i = 0; i < 2; i++) {
-      setStatusLed(true); delay(80);
-      setStatusLed(false); delay(80);
+      setStatusLed(true);
+      delay(80);
+      setStatusLed(false);
+      delay(80);
     }
-    server.send(200, "application/json", "{\"event\":\"led_status\",\"pin\":" + String(pinLed) + ",\"active_low\":" + String(ledActiveLow ? 1 : 0) + "}");
+    server.send(200, "application/json",
+                "{\"event\":\"led_status\",\"pin\":" + String(pinLed) +
+                    ",\"active_low\":" + String(ledActiveLow ? 1 : 0) + "}");
   });
 
   server.begin();
@@ -593,7 +616,8 @@ void loop() {
       currentTargetGapMs = random(cfg.randGapMinMs, cfg.randGapMaxMs + 1);
     }
   } else {
-    // In stopped / idle mode, emit a periodic heartbeat every 3 seconds to confirm loop activity
+    // In stopped / idle mode, emit a periodic heartbeat every 3 seconds to
+    // confirm loop activity
     static uint32_t lastIdleHeartbeatMs = 0;
     if ((uint32_t)(millis() - lastIdleHeartbeatMs) >= 3000) {
       lastIdleHeartbeatMs = millis();
