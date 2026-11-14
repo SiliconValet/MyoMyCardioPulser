@@ -4,443 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyoPulser Controller (ESP32-C3)</title>
+    <title>MyoPulser USB Controller (ESP32-C3)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <style>
-        :root {
-            --bg-dark: #020617;
-            --card-bg: #0f172a;
-            --card-border: #1e293b;
-            --card-inner: #020617;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --text-dim: #64748b;
-            --primary: #10b981;
-            --primary-hover: #059669;
-            --sky: #38bdf8;
-            --amber: #f59e0b;
-            --rose: #f43f5e;
-            --indigo: #6366f1;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            line-height: 1.4;
+            font-family: 'Inter', sans-serif;
         }
 
         .mono {
-            font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
-        }
-
-        header {
-            background: var(--card-bg);
-            border-bottom: 1px solid var(--card-border);
-            padding: 14px 20px;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .header-title-box {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .header-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #34d399;
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .header-status-box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 9999px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .dot-green {
-            background: #10b981;
-        }
-
-        .dot-red {
-            background: #f43f5e;
-        }
-
-        .dot-amber {
-            background: #f59e0b;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s ease-in-out;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            background: var(--primary-hover);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        main {
-            flex: 1;
-            max-width: 1280px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 16px;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-
-        @media (min-width: 992px) {
-            main {
-                grid-template-columns: 5fr 7fr;
-            }
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        .card-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #fff;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .type-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .type-btn {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 10px 12px;
-            text-align: left;
-            cursor: pointer;
-            color: var(--text-muted);
-            transition: all 0.15s ease;
-        }
-
-        .type-btn:hover {
-            border-color: #475569;
-        }
-
-        .type-btn.active {
-            background: rgba(16, 185, 129, 0.15);
-            border-color: #10b981;
-            color: #6ee7b7;
-        }
-
-        .type-btn-title {
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        .type-btn-sub {
-            font-size: 11px;
-            opacity: 0.8;
-            margin-top: 2px;
-        }
-
-        .input-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        label {
-            display: block;
-            font-size: 12px;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        input[type="number"] {
-            width: 100%;
-            background: var(--card-inner);
-            border: 1px solid #334155;
-            border-radius: 10px;
-            padding: 10px 12px;
-            font-size: 14px;
-            color: #fff;
-            font-family: inherit;
-        }
-
-        input[type="number"]:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .mode-tabs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            background: var(--card-inner);
-            padding: 4px;
-            border-radius: 12px;
-            border: 1px solid var(--card-border);
-            gap: 4px;
-        }
-
-        .mode-tab-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-
-        .mode-tab-btn.active {
-            background: #1e293b;
-            color: #fff;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-        }
-
-        .action-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .btn-run {
-            background: #10b981;
-            color: white;
-            padding: 12px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-stop {
-            background: #e11d48;
-            color: white;
-            padding: 12px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn-sub {
-            background: #1e293b;
-            color: var(--text-main);
-            border: 1px solid #334155;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-        }
-
-        .btn-sub:hover:not(:disabled) {
-            background: #334155;
-        }
-
-        .btn-run:disabled,
-        .btn-stop:disabled,
-        .btn-sub:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            padding: 12px 14px;
-        }
-
-        .stat-label {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        .stat-value {
-            font-size: 22px;
-            font-weight: 700;
-            color: #fff;
-            margin-top: 4px;
-        }
-
-        .canvas-container {
-            width: 100%;
-            height: 190px;
-            background: var(--card-inner);
-            border-radius: 12px;
-            border: 1px solid rgba(51, 65, 85, 0.7);
-            position: relative;
-            overflow: hidden;
-        }
-
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        .prediction-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-
-        @media (min-width: 600px) {
-            .prediction-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
-        }
-
-        .pred-box {
-            background: rgba(2, 6, 23, 0.7);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .pred-title {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        .pred-val {
-            font-size: 15px;
-            font-weight: 700;
-            margin: 3px 0;
-        }
-
-        .pred-sub {
-            font-size: 10px;
-            color: var(--text-dim);
-        }
-
-        .guidance-box {
-            background: rgba(2, 6, 23, 0.85);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 12px;
-            font-size: 12px;
-            color: var(--text-muted);
-            line-height: 1.45;
-        }
-
-        .log-box {
-            background: var(--card-inner);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 10px;
-            height: 160px;
-            overflow-y: auto;
-            font-size: 11px;
-            color: var(--text-muted);
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .log-entry {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-            padding: 3px 0;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         @keyframes pulseBeat {
             0% {
                 transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8);
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
             }
 
             50% {
-                transform: scale(1.3);
+                transform: scale(1.25);
                 box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
             }
 
@@ -451,392 +36,307 @@
         }
 
         .beat-active {
-            animation: pulseBeat 0.3s ease-out;
-        }
-
-        .hidden {
-            display: none !important;
+            animation: pulseBeat 0.25s ease-out;
         }
     </style>
 </head>
 
-<body>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
 
-    <header>
-        <div class="header-title-box">
-            <div class="header-icon">⚡</div>
+    <!-- Top Navigation & Connection Bar -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-lg">
+                ⚡
+            </div>
             <div>
-                <h1
-                    style="font-size: 16px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
-                    MyoPulser Controller
-                    <span id="connTag" class="mono"
-                        style="font-size: 10px; padding: 2px 6px; border-radius: 9999px; background: #1e293b; color: #38bdf8; border: 1px solid #334155;">Wi-Fi
-                        Direct</span>
-                </h1>
-                <p style="font-size: 11px; color: var(--text-muted);">Precision Cardiac Electrophysiological Field
-                    Stimulator</p>
+                <h1 class="text-lg font-bold tracking-tight text-white">MyoPulser Controller</h1>
+                <p class="text-xs text-slate-400">ESP32-C3 USB Bio-Stimulation Interface</p>
             </div>
         </div>
 
-        <div class="header-status-box">
-            <div id="loopBadge" class="badge mono">
-                <span id="loopDot" class="dot dot-amber"></span>
-                <span id="loopText">Loop: Idle</span>
+        <div class="flex items-center gap-3">
+            <div id="statusBadge"
+                class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs font-medium text-slate-300">
+                <span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                <span id="statusText">Disconnected</span>
             </div>
-            <div id="statusBadge" class="badge">
-                <span id="statusDot" class="dot dot-green"></span>
-                <span id="statusText">Wi-Fi Connected</span>
-            </div>
-            <button id="connectBtn" class="btn-primary hidden">Connect USB</button>
+            <button id="connectBtn"
+                class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-sm transition shadow-lg shadow-emerald-950/50 cursor-pointer">
+                Connect USB
+            </button>
         </div>
     </header>
 
-    <div id="serialWarning" class="hidden"
-        style="background: rgba(120, 53, 15, 0.8); border-bottom: 1px solid rgba(180, 83, 9, 0.6); padding: 10px 20px; font-size: 12px; color: #fde68a;">
-        <strong>Web Serial notice:</strong> For direct USB cable mode, please open in <strong>Google Chrome</strong> or
-        <strong>Edge</strong>. (When connected over Wi-Fi, this is not needed).
+    <!-- Browser Compatibility Warning (Hidden if Web Serial supported) -->
+    <div id="serialWarning"
+        class="hidden bg-amber-950/80 border-b border-amber-700/60 px-6 py-3 text-amber-200 text-sm">
+        <strong>Web Serial API not detected:</strong> Please open this file in <strong>Google Chrome</strong> or
+        <strong>Microsoft Edge</strong> on desktop to connect over USB.
     </div>
 
-    <main>
-        <!-- Left Column: Controls & Hardware Diagnostics -->
-        <section style="display: flex; flex-direction: column; gap: 16px;">
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">Waveform & Timing</span>
-                    <span class="mono"
-                        style="font-size: 11px; padding: 3px 8px; border-radius: 6px; background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">9V
-                        H-Bridge</span>
+    <!-- Main Workspace Grid -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Stimulation Parameters (5 cols) -->
+        <section class="lg:col-span-5 space-y-5">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-5">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <h2 class="font-semibold text-base text-white">Waveform & Timing</h2>
+                    <span class="text-xs px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 mono">9V H-Bridge</span>
                 </div>
 
-                <!-- Pulse Waveform Architecture -->
+                <!-- Pulse Type Selector -->
                 <div>
-                    <label style="text-transform: uppercase; letter-spacing: 0.05em;">Waveform Architecture</label>
-                    <div class="type-grid" id="typeSelector">
-                        <button type="button" data-type="0" class="type-btn active">
-                            <div class="type-btn-title" style="display: flex; justify-content: space-between;">
-                                Biphasic
-                                <span class="mono"
-                                    style="font-size: 9px; padding: 1px 4px; border-radius: 4px; background: rgba(16, 185, 129, 0.2); color: #34d399;">Standard</span>
-                            </div>
-                            <div class="type-btn-sub">Symmetrical (+V / -V)</div>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Pulse Polarity
+                        Type</label>
+                    <div class="grid grid-cols-2 gap-2" id="typeSelector">
+                        <button type="button" data-type="0"
+                            class="type-btn active px-3 py-2.5 rounded-xl border text-left transition cursor-pointer bg-emerald-500/15 border-emerald-500 text-emerald-300">
+                            <div class="font-semibold text-sm">Biphasic</div>
+                            <div class="text-[11px] opacity-80">Anodic-first (+V/-V)</div>
                         </button>
-                        <button type="button" data-type="1" class="type-btn">
-                            <div class="type-btn-title">Polyphasic AC</div>
-                            <div class="type-btn-sub">High-frequency burst</div>
+                        <button type="button" data-type="1"
+                            class="type-btn px-3 py-2.5 rounded-xl border text-left transition cursor-pointer bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-600">
+                            <div class="font-semibold text-sm">Polyphasic AC</div>
+                            <div class="text-[11px] opacity-70">High-freq burst</div>
                         </button>
-                        <button type="button" data-type="2" class="type-btn">
-                            <div class="type-btn-title">Alternating</div>
-                            <div class="type-btn-sub">Inverts / beat</div>
+                        <button type="button" data-type="2"
+                            class="type-btn px-3 py-2.5 rounded-xl border text-left transition cursor-pointer bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-600">
+                            <div class="font-semibold text-sm">Alternating</div>
+                            <div class="text-[11px] opacity-70">Flips per beat</div>
                         </button>
-                        <button type="button" data-type="3" class="type-btn">
-                            <div class="type-btn-title" style="color: #f59e0b;">Monophasic</div>
-                            <div class="type-btn-sub" style="color: rgba(245, 158, 11, 0.8);">DC (+V only)</div>
+                        <button type="button" data-type="3"
+                            class="type-btn px-3 py-2.5 rounded-xl border text-left transition cursor-pointer bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-600">
+                            <div class="font-semibold text-sm">Monophasic</div>
+                            <div class="text-[11px] text-amber-400/90">DC (+V only)</div>
                         </button>
                     </div>
                 </div>
 
-                <!-- Monophasic Alert -->
-                <div id="monoWarning" class="hidden"
-                    style="background: rgba(69, 26, 3, 0.6); border: 1px solid rgba(180, 83, 9, 0.5); padding: 10px; border-radius: 10px; font-size: 11px; color: #fde68a;">
-                    <strong>⚠ Electrolysis Alert:</strong> Monophasic DC pulses do not reverse double-layer charge. Long
-                    pacing risks electrode corrosion, water electrolysis, and cytotoxic pH changes. Use Biphasic for
-                    cell cultures.
+                <!-- Monophasic Electrolysis Warning -->
+                <div id="monoWarning"
+                    class="hidden p-3 rounded-xl bg-amber-950/60 border border-amber-700/60 text-xs text-amber-200">
+                    <strong>Electrolysis Warning:</strong> Monophasic pulses do not reverse electrode polarization and
+                    can shift medium pH during prolonged runs. Use Biphasic or Polyphasic for cell cultures.
                 </div>
 
-                <!-- Polyphasic Control -->
-                <div id="polyControl" class="hidden"
-                    style="background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; padding: 12px; border-radius: 10px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
-                        <label for="polyHalfUs" style="margin: 0;">AC Half-Period (µs)</label>
-                        <span id="polyFreqLabel" class="mono" style="color: #34d399; font-weight: 700;">1.00 kHz</span>
+                <!-- Polyphasic Half-Period (Shown only when Polyphasic selected) -->
+                <div id="polyControl" class="hidden bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/70">
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <label for="polyHalfUs" class="font-medium text-slate-300">AC Half-Phase Duration (µs)</label>
+                        <span id="polyFreqLabel" class="mono text-emerald-400">1.00 kHz</span>
                     </div>
-                    <input id="polyHalfUs" type="number" min="30" max="5000" step="10" value="500">
-                    <div
-                        style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 4px;">
-                        <span>Range: 30µs (16.7kHz) – 1000µs (0.5kHz)</span>
-                        <span id="polyCyclesLabel" class="mono" style="color: #38bdf8;">10 flips</span>
-                    </div>
+                    <input id="polyHalfUs" type="number" min="30" max="5000" step="10" value="500"
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm mono text-white focus:outline-none focus:border-emerald-500">
                 </div>
 
-                <!-- Rhythm Mode -->
+                <!-- Pacing Mode Tabs -->
                 <div>
-                    <label style="text-transform: uppercase; letter-spacing: 0.05em;">Pacing Rhythm Mode</label>
-                    <div class="mode-tabs">
-                        <button type="button" id="modeNormalBtn" class="mode-tab-btn active">Continuous (Fixed)</button>
-                        <button type="button" id="modeRandomBtn" class="mode-tab-btn">Arrhythmia (Random)</button>
+                    <label class="block text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Pacing
+                        Rhythm</label>
+                    <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800">
+                        <button type="button" id="modeNormalBtn"
+                            class="py-2 rounded-lg text-xs font-semibold bg-slate-800 text-white shadow cursor-pointer">
+                            Continuous (Fixed)
+                        </button>
+                        <button type="button" id="modeRandomBtn"
+                            class="py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white cursor-pointer">
+                            Arrhythmia (Random)
+                        </button>
                     </div>
                 </div>
 
                 <!-- Normal Mode Inputs -->
-                <div id="normalInputs" class="input-row">
+                <div id="normalInputs" class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="pulseWidthMs">Pulse Duration (ms)</label>
-                        <input id="pulseWidthMs" type="number" min="1" max="100" step="0.5" value="10">
-                        <span id="pulseSplitLabel" class="mono"
-                            style="font-size: 10px; color: var(--text-dim); display: block; margin-top: 4px;">5.0ms (+)
-                            / 5.0ms (-)</span>
+                        <label for="pulseWidthMs" class="block text-xs font-medium text-slate-300 mb-1.5">Pulse Width
+                            (ms)</label>
+                        <input id="pulseWidthMs" type="number" min="1" max="200" step="0.5" value="10"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm mono text-white focus:outline-none focus:border-emerald-500">
+                        <span class="text-[11px] text-slate-500 mt-1 block">5 ms anodic + 5 ms cathodic</span>
                     </div>
                     <div>
-                        <label for="frequencyHz">Pacing Rate (Hz)</label>
-                        <input id="frequencyHz" type="number" min="0.2" max="25" step="0.1" value="1.0">
-                        <span id="bpmLabel" class="mono"
-                            style="font-size: 10px; color: #34d399; display: block; margin-top: 4px;">60 BPM (Gap: 990
-                            ms)</span>
+                        <label for="frequencyHz" class="block text-xs font-medium text-slate-300 mb-1.5">Pacing Rate
+                            (Hz)</label>
+                        <input id="frequencyHz" type="number" min="0.2" max="25" step="0.1" value="1.0"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-sm mono text-white focus:outline-none focus:border-emerald-500">
+                        <span id="bpmLabel" class="text-[11px] text-emerald-400 mt-1 block">60 BPM (Gap: 990 ms)</span>
                     </div>
                 </div>
 
                 <!-- Random Mode Inputs -->
-                <div id="randomInputs" class="hidden"
-                    style="background: rgba(30, 41, 59, 0.4); border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
-                    <div style="font-size: 11px; color: #38bdf8; font-weight: 600;">Arrhythmia Bounds:</div>
-                    <div class="input-row">
+                <div id="randomInputs"
+                    class="hidden space-y-3 bg-slate-800/40 p-3.5 rounded-xl border border-slate-800">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label>Min Pulse (ms)</label>
-                            <input id="randPulseMin" type="number" min="1" max="100" value="5">
+                            <label class="block text-xs text-slate-400 mb-1">Min Pulse (ms)</label>
+                            <input id="randPulseMin" type="number" min="1" max="200" value="5"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm mono">
                         </div>
                         <div>
-                            <label>Max Pulse (ms)</label>
-                            <input id="randPulseMax" type="number" min="1" max="100" value="20">
+                            <label class="block text-xs text-slate-400 mb-1">Max Pulse (ms)</label>
+                            <input id="randPulseMax" type="number" min="1" max="200" value="20"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm mono">
                         </div>
                     </div>
-                    <div class="input-row">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label>Min Gap (ms)</label>
-                            <input id="randGapMin" type="number" min="25" max="3000" value="400">
+                            <label class="block text-xs text-slate-400 mb-1">Min Gap (ms)</label>
+                            <input id="randGapMin" type="number" min="25" max="5000" value="400"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm mono">
                         </div>
                         <div>
-                            <label>Max Gap (ms)</label>
-                            <input id="randGapMax" type="number" min="25" max="3000" value="1200">
+                            <label class="block text-xs text-slate-400 mb-1">Max Gap (ms)</label>
+                            <input id="randGapMax" type="number" min="25" max="5000" value="1200"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-sm mono">
                         </div>
                     </div>
-                    <div id="randSummaryLabel" class="mono" style="font-size: 10px; color: var(--text-muted);">Rate: ~45
-                        – 130 BPM (Irregular)</div>
                 </div>
 
-                <!-- Action Buttons -->
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
-                    <div class="action-row">
-                        <button id="startBtn" class="btn-run">▶ Start Pacing</button>
-                        <button id="stopBtn" class="btn-stop">■ Stop / Pause</button>
+                <!-- Primary Action Buttons -->
+                <div class="pt-2 space-y-2.5">
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="startBtn" disabled
+                            class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition cursor-pointer">
+                            ▶ Start Pacing
+                        </button>
+                        <button id="stopBtn" disabled
+                            class="py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition cursor-pointer">
+                            ■ Stop
+                        </button>
                     </div>
-                    <div class="action-row">
-                        <button id="manualBtn" class="btn-sub">⚡ Single Test Pulse</button>
-                        <button id="applyBtn" class="btn-sub" style="color: #6ee7b7;">↻ Live Update</button>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="manualBtn" disabled
+                            class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 font-medium text-xs border border-slate-700 transition cursor-pointer">
+                            ⚡ Fire Single Pulse
+                        </button>
+                        <button id="applyBtn" disabled
+                            class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-emerald-300 font-medium text-xs border border-slate-700 transition cursor-pointer">
+                            ↻ Update Live Params
+                        </button>
                     </div>
-                </div>
-            </div>
-
-            <!-- Hardware Diagnostic & Self-Test Panel -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">🛠 Hardware Self-Test & Diagnostic</span>
-                    <span id="diagStatus" class="mono" style="font-size: 11px; color: var(--text-dim);">Ready</span>
-                </div>
-
-                <div class="action-row">
-                    <button id="pingBtn" class="btn-sub" style="color: #38bdf8;">📡 Ping Controller</button>
-                    <button id="testLedBtn" class="btn-sub" style="color: #f59e0b;">💡 Test Onboard LED</button>
-                </div>
-
-                <div class="action-row">
-                    <button id="togglePolarityBtn" class="btn-sub mono" style="text-align: left; font-size: 11px;">
-                        LED: <span id="ledPolarityText" style="color: #34d399;">Active-LOW</span> ⟳
-                    </button>
-                    <button id="togglePinBtn" class="btn-sub mono" style="text-align: left; font-size: 11px;">
-                        Pin: <span id="ledPinText" style="color: #34d399;">GPIO 8</span> ⟳
-                    </button>
-                </div>
-
-                <div id="diagnosticFeedback" class="mono"
-                    style="font-size: 11px; background: var(--card-inner); padding: 10px; border-radius: 8px; border: 1px solid var(--card-border); color: var(--text-muted);">
-                    ESP32-C3 Online. Use buttons above to verify loop latency and trigger the onboard LED.
                 </div>
             </div>
         </section>
 
-        <!-- Right Column: Visualizer, Predictions, Telemetry -->
-        <section style="display: flex; flex-direction: column; gap: 16px;">
-            <!-- Live Stats -->
-            <div class="stats-grid">
-                <div class="stat-card" style="display: flex; align-items: center; justify-content: space-between;">
+        <!-- Right Column: Live Oscilloscope Preview & Telemetry Log (7 cols) -->
+        <section class="lg:col-span-7 flex flex-col gap-5">
+
+            <!-- Live Stats Cards -->
+            <div class="grid grid-cols-3 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
                     <div>
-                        <div class="stat-label">Pulses Fired</div>
-                        <div id="pulseCountDisplay" class="stat-value mono">0</div>
+                        <div class="text-xs text-slate-400">Pulses Delivered</div>
+                        <div id="pulseCountDisplay" class="text-2xl font-bold mono text-white mt-0.5">0</div>
                     </div>
-                    <div id="pulseIndicator"
-                        style="width: 16px; height: 16px; border-radius: 50%; background: #1e293b; border: 1px solid #334155;">
-                    </div>
+                    <div id="pulseIndicator" class="w-4 h-4 rounded-full bg-slate-700 transition-colors"></div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Elapsed Session</div>
-                    <div id="elapsedDisplay" class="stat-value mono">00:00</div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="text-xs text-slate-400">Elapsed Session</div>
+                    <div id="elapsedDisplay" class="text-2xl font-bold mono text-white mt-0.5">00:00</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Delivered Width</div>
-                    <div id="actualDurDisplay" class="stat-value mono" style="color: #34d399;">-- ms</div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="text-xs text-slate-400">Last Pulse Width</div>
+                    <div id="actualDurDisplay" class="text-2xl font-bold mono text-emerald-400 mt-0.5">-- ms</div>
                 </div>
             </div>
 
-            <!-- Oscilloscope Display -->
-            <div class="card">
-                <div class="card-header">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="card-title">Oscilloscope Display</span>
-                        <span id="waveLiveBadge" class="hidden mono"
-                            style="font-size: 9px; padding: 2px 6px; border-radius: 9999px; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);">LIVE</span>
+            <!-- Waveform Visualizer Canvas -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span id="waveModeTitle"
+                            class="text-xs font-semibold uppercase tracking-wider text-slate-400">Preview Waveform
+                            (Configured)</span>
+                        <span id="waveLiveBadge"
+                            class="hidden px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse">LIVE
+                            TELEMETRY</span>
                     </div>
-
-                    <div
-                        style="display: flex; gap: 4px; background: var(--card-inner); padding: 3px; border-radius: 8px; border: 1px solid var(--card-border);">
-                        <button type="button" id="scopeZoomBtn" class="mode-tab-btn active"
-                            style="padding: 4px 10px;">🔍 Single Pulse Zoom</button>
-                        <button type="button" id="scopeTrainBtn" class="mode-tab-btn" style="padding: 4px 10px;">📈
-                            Rhythm Train (3.0s)</button>
-                    </div>
+                    <span class="text-xs mono text-slate-400">+9V / 0V / -9V (3.0s Window)</span>
                 </div>
-
-                <div class="canvas-container">
-                    <canvas id="waveCanvas"></canvas>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim);"
-                    class="mono">
-                    <span id="waveSubtitle">Biphasic Symmetrical (+9V / -9V)</span>
-                    <span id="waveScaleLabel">Timebase: Single Pulse Zoom</span>
+                <div class="w-full h-40 bg-slate-950 rounded-xl border border-slate-800/80 overflow-hidden relative">
+                    <canvas id="waveCanvas" class="w-full h-full block"></canvas>
                 </div>
             </div>
 
-            <!-- Biophysical Prediction Engine -->
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">🧪 Biophysical Prediction & Cell Safety</span>
-                    <span id="chargeBalanceBadge" class="mono"
-                        style="font-size: 10px; padding: 2px 8px; border-radius: 9999px; background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">
-                        ✓ 100% Charge Balanced
-                    </span>
-                </div>
-
-                <div class="prediction-grid">
-                    <div class="pred-box">
-                        <div class="pred-title">Electric Field (E)</div>
-                        <div id="predField" class="pred-val mono" style="color: #38bdf8;">1800 V/m</div>
-                        <div class="pred-sub mono">18 V/cm @ 5mm</div>
-                    </div>
-                    <div class="pred-box">
-                        <div class="pred-title">Est. Current (I)</div>
-                        <div id="predCurrent" class="pred-val mono" style="color: #34d399;">~1.0 mA</div>
-                        <div class="pred-sub mono">in Krebs-Ringer</div>
-                    </div>
-                    <div class="pred-box">
-                        <div class="pred-title">Charge / Pulse (Q)</div>
-                        <div id="predCharge" class="pred-val mono" style="color: #c084fc;">10.0 µC</div>
-                        <div id="predChargeSplit" class="pred-sub mono">+5.0µC / -5.0µC</div>
-                    </div>
-                    <div class="pred-box">
-                        <div class="pred-title">Duty Cycle</div>
-                        <div id="predDuty" class="pred-val mono" style="color: #f59e0b;">1.00%</div>
-                        <div id="predEnergy" class="pred-sub mono">~90 µJ / beat</div>
-                    </div>
-                </div>
-
-                <div class="guidance-box">
-                    <span id="bioGuidanceText">
-                        <strong>Biphasic Pacing:</strong> Reverses double-layer polarization after 50% of the pulse.
-                        This neutralizes electrolysis byproducts, prevents electrode erosion, and maintains cell
-                        viability over multi-hour pacing experiments.
-                    </span>
-                </div>
-            </div>
-
-            <!-- Telemetry & Debug Log -->
-            <div class="card" style="flex: 1;">
-                <div class="card-header">
+            <!-- Telemetry Log & CSV Export -->
+            <div
+                class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl flex-1 flex flex-col min-h-[260px]">
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
                     <div>
-                        <span class="card-title">Pulse Telemetry & Stream Log</span>
-                        <div style="font-size: 11px; color: var(--text-dim); margin-top: 2px;">Hardware pulse duration &
-                            interval capture</div>
+                        <h3 class="text-sm font-semibold text-white">Pulse Telemetry & Serial Debug Log</h3>
+                        <p class="text-[11px] text-slate-400">Syncs hardware pulse timestamps & TX/RX serial packets</p>
                     </div>
-                    <div style="display: flex; gap: 6px;">
-                        <button id="clearLogBtn" class="btn-sub" style="padding: 4px 10px;">Clear</button>
-                        <button id="exportCsvBtn" class="btn-sub"
-                            style="padding: 4px 10px; color: #34d399; border-color: rgba(16, 185, 129, 0.4);">↓ Export
-                            CSV</button>
+                    <div class="flex items-center gap-2">
+                        <button id="clearLogBtn"
+                            class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700 cursor-pointer">
+                            Clear
+                        </button>
+                        <button id="exportCsvBtn"
+                            class="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-xs font-semibold text-emerald-300 border border-emerald-500/40 cursor-pointer">
+                            ↓ Export CSV
+                        </button>
                     </div>
                 </div>
 
-                <div id="logContainer" class="log-box mono">
-                    <div style="color: var(--text-dim); font-style: italic;">Connecting to controller...</div>
+                <div id="logContainer" class="flex-1 overflow-y-auto mt-3 space-y-1 max-h-56 pr-1 mono text-xs">
+                    <div class="text-slate-500 italic">Waiting for USB connection...</div>
                 </div>
             </div>
+
         </section>
     </main>
 
     <script>
-        const isHttpMode = window.location.protocol.startsWith('http');
-        let port = null, reader = null, writer = null;
-        let isConnected = isHttpMode;
+        // --- State Management ---
+        let port = null;
+        let reader = null;
+        let writer = null;
+        let isConnected = false;
         let isRunning = false;
-        let selectedType = 0;
-        let selectedMode = 1;
-        let scopeView = 'zoom';
+        let selectedType = 0; // 0: Biphasic, 1: Polyphasic, 2: Alternating, 3: Monophasic
+        let selectedMode = 1; // 1: Normal, 2: Random
         let telemetryRows = [];
-        let recentPulses = [];
+        let recentPulses = []; // Rolling buffer of received pulses for live waveform reconstruction
         let sessionStartLocal = null;
         let timerInterval = null;
         let waveAnimFrame = null;
-        let lastPingSentTime = 0;
-        let currentLedPin = 8;
-        let currentLedActiveLow = true;
-        let lastReceivedPulseId = 0;
-        let pollingInterval = null;
 
         const TYPE_NAMES = ['Biphasic', 'Polyphasic', 'Alternating', 'Monophasic'];
-        const WINDOW_MS = 3000;
+        const WINDOW_MS = 3000; // 3-second rolling oscilloscope window
 
+        // --- DOM & Canvas Elements ---
         const connectBtn = document.getElementById('connectBtn');
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
         const manualBtn = document.getElementById('manualBtn');
         const applyBtn = document.getElementById('applyBtn');
-        const pingBtn = document.getElementById('pingBtn');
-        const testLedBtn = document.getElementById('testLedBtn');
-        const togglePolarityBtn = document.getElementById('togglePolarityBtn');
-        const togglePinBtn = document.getElementById('togglePinBtn');
         const logContainer = document.getElementById('logContainer');
         const waveCanvas = document.getElementById('waveCanvas');
         const ctx = waveCanvas.getContext('2d');
-        const scopeZoomBtn = document.getElementById('scopeZoomBtn');
-        const scopeTrainBtn = document.getElementById('scopeTrainBtn');
 
-        // Scope Switcher
-        scopeZoomBtn.addEventListener('click', () => {
-            scopeView = 'zoom';
-            scopeZoomBtn.className = 'mode-tab-btn active';
-            scopeTrainBtn.className = 'mode-tab-btn';
-            document.getElementById('waveScaleLabel').textContent = 'Timebase: Single Pulse Zoom';
-            renderWaveformCanvas();
-        });
+        if (!('serial' in navigator)) {
+            document.getElementById('serialWarning').classList.remove('hidden');
+            connectBtn.disabled = true;
+        }
 
-        scopeTrainBtn.addEventListener('click', () => {
-            scopeView = 'train';
-            scopeTrainBtn.className = 'mode-tab-btn active';
-            scopeZoomBtn.className = 'mode-tab-btn';
-            document.getElementById('waveScaleLabel').textContent = 'Timebase: 3.0s Rhythm Sweep';
-            renderWaveformCanvas();
-        });
-
+        // --- Waveform Renderer (Preview vs. Live Telemetry Reconstruction) ---
         function drawPulseShape(ctx, startX, widthPx, midY, ampY, type, pol = 1, durUs = 10000, polyHalfUs = 500) {
-            const w = Math.max(2, widthPx);
+            const w = Math.max(2, widthPx); // Ensure narrow 10ms pulses remain crisp on a 3s timeline
             ctx.lineTo(startX, midY);
 
             if (type === 0) {
+                // Biphasic: Anodic (+9V) first half, Cathodic (-9V) second half
                 ctx.lineTo(startX, midY - ampY);
                 ctx.lineTo(startX + w / 2, midY - ampY);
                 ctx.lineTo(startX + w / 2, midY + ampY);
                 ctx.lineTo(startX + w, midY + ampY);
                 ctx.lineTo(startX + w, midY);
             } else if (type === 1) {
-                const halfCycles = Math.max(2, Math.min(60, Math.round(durUs / Math.max(30, polyHalfUs))));
+                // Polyphasic AC burst: calculate actual half-cycles from durUs & polyHalfUs
+                const halfCycles = Math.max(2, Math.min(40, Math.round(durUs / Math.max(30, polyHalfUs))));
                 const stepW = w / halfCycles;
                 for (let s = 0; s < halfCycles; s++) {
                     const yTarget = (s % 2 === 0) ? (midY - ampY) : (midY + ampY);
@@ -845,11 +345,13 @@
                 }
                 ctx.lineTo(startX + w, midY);
             } else if (type === 2) {
+                // Alternating: single polarity per beat (+9V or -9V)
                 const yTarget = pol >= 0 ? (midY - ampY) : (midY + ampY);
                 ctx.lineTo(startX, yTarget);
                 ctx.lineTo(startX + w, yTarget);
                 ctx.lineTo(startX + w, midY);
             } else {
+                // Monophasic: +9V only
                 ctx.lineTo(startX, midY - ampY);
                 ctx.lineTo(startX + w, midY - ampY);
                 ctx.lineTo(startX + w, midY);
@@ -869,195 +371,102 @@
             const w = rect.width;
             const h = rect.height;
             const midY = h / 2;
-            const ampY = h * 0.36;
-            const leftPad = 44;
-            const rightPad = 14;
-            const plotW = w - leftPad - rightPad;
+            const ampY = h * 0.34;
+            const leftPad = 42;
+            const plotW = w - leftPad - 12;
 
             ctx.clearRect(0, 0, w, h);
 
-            // Voltage reference lines
+            // Horizontal Voltage Reference Lines (+9V, 0V, -9V)
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 1;
             ctx.setLineDash([4, 4]);
             [midY - ampY, midY, midY + ampY].forEach(y => {
                 ctx.beginPath();
                 ctx.moveTo(leftPad, y);
-                ctx.lineTo(w - rightPad, y);
+                ctx.lineTo(w - 10, y);
                 ctx.stroke();
             });
 
-            ctx.strokeStyle = '#334155';
+            // Vertical 0.5s Time Grid Lines
+            for (let t = 0; t <= WINDOW_MS; t += 500) {
+                const gx = leftPad + (t / WINDOW_MS) * plotW;
+                ctx.beginPath();
+                ctx.moveTo(gx, 10);
+                ctx.lineTo(gx, h - 14);
+                ctx.stroke();
+            }
             ctx.setLineDash([]);
-            ctx.beginPath();
-            ctx.moveTo(leftPad, midY);
-            ctx.lineTo(w - rightPad, midY);
-            ctx.stroke();
 
+            // Axis Labels
             ctx.fillStyle = '#64748b';
-            ctx.font = '10px JetBrains Mono, monospace';
+            ctx.font = '10px JetBrains Mono';
             ctx.fillText('+9V', 8, midY - ampY + 3);
             ctx.fillText(' 0V', 8, midY + 3);
             ctx.fillText('-9V', 8, midY + ampY + 3);
 
             const showLive = isRunning || recentPulses.length > 0;
+            document.getElementById('waveModeTitle').textContent = showLive
+                ? 'Live Reconstructed Output (Hardware Telemetry)'
+                : 'Preview Waveform (Configured)';
             document.getElementById('waveLiveBadge').classList.toggle('hidden', !isRunning);
 
-            if (scopeView === 'zoom') {
-                document.getElementById('waveScaleLabel').textContent = 'Micro View: Single Pulse Detail';
+            if (!showLive) {
+                // --- PREVIEW MODE: Plot proportional to user's configured ms & Hz ---
                 const pwMs = parseFloat(document.getElementById('pulseWidthMs').value) || 10;
+                const hz = parseFloat(document.getElementById('frequencyHz').value) || 1.0;
                 const polyHalfUs = parseFloat(document.getElementById('polyHalfUs').value) || 500;
-                const zoomWindowMs = Math.max(20, Math.ceil(pwMs * 1.6));
+                const periodMs = Math.max(pwMs + 20, 1000 / hz);
 
-                ctx.strokeStyle = '#1e293b';
-                ctx.setLineDash([3, 3]);
-                const stepMs = zoomWindowMs <= 25 ? 5 : (zoomWindowMs <= 50 ? 10 : 20);
-                for (let t = 0; t <= zoomWindowMs; t += stepMs) {
-                    const gx = leftPad + (t / zoomWindowMs) * plotW;
-                    ctx.beginPath();
-                    ctx.moveTo(gx, 12);
-                    ctx.lineTo(gx, h - 16);
-                    ctx.stroke();
-                    ctx.fillStyle = '#475569';
-                    ctx.fillText(`${t}ms`, gx - 8, h - 4);
-                }
-                ctx.setLineDash([]);
-
-                const pulseStartMs = 2.0;
-                const pulseStartX = leftPad + (pulseStartMs / zoomWindowMs) * plotW;
-                const pulseWidthPx = (pwMs / zoomWindowMs) * plotW;
-
-                ctx.fillStyle = selectedType === 3 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(16, 185, 129, 0.12)';
-                if (selectedType === 0) {
-                    ctx.fillRect(pulseStartX, midY - ampY, pulseWidthPx / 2, ampY);
-                    ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
-                    ctx.fillRect(pulseStartX + pulseWidthPx / 2, midY, pulseWidthPx / 2, ampY);
-                } else if (selectedType === 3) {
-                    ctx.fillRect(pulseStartX, midY - ampY, pulseWidthPx, ampY);
-                } else {
-                    ctx.fillRect(pulseStartX, midY - ampY, pulseWidthPx, ampY * 2);
-                }
-
-                ctx.strokeStyle = selectedType === 3 ? '#f59e0b' : '#10b981';
-                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = '#38bdf8'; // Sky blue for preview
+                ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(leftPad, midY);
-                ctx.lineTo(pulseStartX, midY);
-                drawPulseShape(ctx, pulseStartX, pulseWidthPx, midY, ampY, selectedType, 1, pwMs * 1000, polyHalfUs);
-                ctx.lineTo(w - rightPad, midY);
+
+                let beat = 0;
+                for (let tMs = 120; tMs < WINDOW_MS; tMs += periodMs) {
+                    const x = leftPad + (tMs / WINDOW_MS) * plotW;
+                    const pwPx = (pwMs / WINDOW_MS) * plotW;
+                    const pol = (beat % 2 === 0) ? 1 : -1;
+                    drawPulseShape(ctx, x, pwPx, midY, ampY, selectedType, pol, pwMs * 1000, polyHalfUs);
+                    beat++;
+                }
+                ctx.lineTo(w - 10, midY);
                 ctx.stroke();
 
-                ctx.font = '10px JetBrains Mono, monospace';
-                if (selectedType === 0) {
-                    ctx.fillStyle = '#34d399';
-                    ctx.fillText(`Anodic: ${(pwMs / 2).toFixed(1)}ms (+9V)`, pulseStartX, midY - ampY - 6);
-                    ctx.fillStyle = '#38bdf8';
-                    ctx.fillText(`Cathodic: ${(pwMs / 2).toFixed(1)}ms (-9V)`, pulseStartX + pulseWidthPx / 2, midY + ampY + 14);
-                } else if (selectedType === 1) {
-                    const acKhz = (1000 / (polyHalfUs * 2)).toFixed(2);
-                    ctx.fillStyle = '#38bdf8';
-                    ctx.fillText(`Polyphasic Burst: ${acKhz} kHz AC (${polyHalfUs}µs phase)`, pulseStartX, midY - ampY - 6);
-                } else if (selectedType === 2) {
-                    ctx.fillStyle = '#38bdf8';
-                    ctx.fillText(`Beat N: +9V (Beat N+1 inverts)`, pulseStartX, midY - ampY - 6);
-                } else {
-                    ctx.fillStyle = '#f59e0b';
-                    ctx.fillText(`Monophasic DC: ${pwMs.toFixed(1)}ms (+9V)`, pulseStartX, midY - ampY - 6);
-                }
-
+                // Time labels
+                ctx.fillStyle = '#475569';
+                ctx.fillText('0.0s', leftPad, h - 3);
+                ctx.fillText('1.5s', leftPad + plotW * 0.5 - 10, h - 3);
+                ctx.fillText('3.0s', w - 34, h - 3);
             } else {
-                document.getElementById('waveScaleLabel').textContent = 'Macro View: 3.0s Rhythm Sweep';
+                // --- LIVE MODE: Reconstruct exact received hardware pulses on a rolling 3s sweep ---
+                const now = performance.now();
+                // Prune pulses older than window + buffer
+                recentPulses = recentPulses.filter(p => (now - p.receivedAt) <= WINDOW_MS + 500);
 
-                ctx.strokeStyle = '#1e293b';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([4, 4]);
-                for (let t = 0; t <= WINDOW_MS; t += 500) {
-                    const gx = leftPad + (t / WINDOW_MS) * plotW;
-                    ctx.beginPath();
-                    ctx.moveTo(gx, 12);
-                    ctx.lineTo(gx, h - 16);
-                    ctx.stroke();
-                }
-                ctx.setLineDash([]);
+                ctx.strokeStyle = '#10b981'; // Emerald green for live delivered pulses
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                ctx.moveTo(leftPad, midY);
 
-                if (!showLive) {
-                    ctx.strokeStyle = '#38bdf8';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(leftPad, midY);
+                for (const p of recentPulses) {
+                    const ageMs = now - p.receivedAt;
+                    const pulseStartMsAgo = ageMs + (p.durUs / 1000);
+                    const x = leftPad + ((WINDOW_MS - pulseStartMsAgo) / WINDOW_MS) * plotW;
+                    const pwPx = ((p.durUs / 1000) / WINDOW_MS) * plotW;
 
-                    if (selectedMode === 1) {
-                        const pwMs = parseFloat(document.getElementById('pulseWidthMs').value) || 10;
-                        const hz = parseFloat(document.getElementById('frequencyHz').value) || 1.0;
-                        const polyHalfUs = parseFloat(document.getElementById('polyHalfUs').value) || 500;
-                        const periodMs = Math.max(pwMs + 20, 1000 / hz);
-
-                        let beat = 0;
-                        for (let tMs = 100; tMs < WINDOW_MS; tMs += periodMs) {
-                            const x = leftPad + (tMs / WINDOW_MS) * plotW;
-                            const pwPx = (pwMs / WINDOW_MS) * plotW;
-                            const pol = (beat % 2 === 0) ? 1 : -1;
-                            drawPulseShape(ctx, x, pwPx, midY, ampY, selectedType, pol, pwMs * 1000, polyHalfUs);
-                            beat++;
-                        }
-                    } else {
-                        const rPMin = parseFloat(document.getElementById('randPulseMin').value) || 5;
-                        const rPMax = parseFloat(document.getElementById('randPulseMax').value) || 20;
-                        const rGMin = parseFloat(document.getElementById('randGapMin').value) || 400;
-                        const rGMax = parseFloat(document.getElementById('randGapMax').value) || 1200;
-
-                        let tCur = 80;
-                        let seed = 42;
-                        let beat = 0;
-                        while (tCur < WINDOW_MS) {
-                            seed = (seed * 9301 + 49297) % 233280;
-                            const rPw = rPMin + (seed / 233280) * (rPMax - rPMin);
-                            seed = (seed * 9301 + 49297) % 233280;
-                            const rGap = rGMin + (seed / 233280) * (rGMax - rGMin);
-
-                            const x = leftPad + (tCur / WINDOW_MS) * plotW;
-                            const pwPx = (rPw / WINDOW_MS) * plotW;
-                            const pol = (beat % 2 === 0) ? 1 : -1;
-                            drawPulseShape(ctx, x, pwPx, midY, ampY, selectedType, pol, rPw * 1000, 500);
-                            tCur += rPw + rGap;
-                            beat++;
-                        }
+                    if (x + pwPx >= leftPad && x <= w - 10) {
+                        drawPulseShape(ctx, Math.max(leftPad, x), pwPx, midY, ampY, p.type, p.pol, p.durUs, p.polyUs);
                     }
-                    ctx.lineTo(w - rightPad, midY);
-                    ctx.stroke();
-
-                    ctx.fillStyle = '#475569';
-                    ctx.fillText('0.0s', leftPad, h - 4);
-                    ctx.fillText('1.5s', leftPad + plotW * 0.5 - 10, h - 4);
-                    ctx.fillText('3.0s', w - rightPad - 24, h - 4);
-
-                } else {
-                    const now = performance.now();
-                    recentPulses = recentPulses.filter(p => (now - p.receivedAt) <= WINDOW_MS + 600);
-
-                    ctx.strokeStyle = '#10b981';
-                    ctx.lineWidth = 2.2;
-                    ctx.beginPath();
-                    ctx.moveTo(leftPad, midY);
-
-                    for (const p of recentPulses) {
-                        const ageMs = now - p.receivedAt;
-                        const pulseStartMsAgo = ageMs + (p.durUs / 1000);
-                        const x = leftPad + ((WINDOW_MS - pulseStartMsAgo) / WINDOW_MS) * plotW;
-                        const pwPx = ((p.durUs / 1000) / WINDOW_MS) * plotW;
-
-                        if (x + pwPx >= leftPad && x <= w - rightPad) {
-                            drawPulseShape(ctx, Math.max(leftPad, x), pwPx, midY, ampY, p.type, p.pol, p.durUs, p.polyUs);
-                        }
-                    }
-                    ctx.lineTo(w - rightPad, midY);
-                    ctx.stroke();
-
-                    ctx.fillStyle = '#475569';
-                    ctx.fillText('-3.0s', leftPad, h - 4);
-                    ctx.fillText('-1.5s', leftPad + plotW * 0.5 - 12, h - 4);
-                    ctx.fillText('NOW', w - rightPad - 24, h - 4);
                 }
+                ctx.lineTo(w - 10, midY);
+                ctx.stroke();
+
+                ctx.fillStyle = '#475569';
+                ctx.fillText('-3.0s', leftPad, h - 3);
+                ctx.fillText('-1.5s', leftPad + plotW * 0.5 - 12, h - 3);
+                ctx.fillText('NOW', w - 28, h - 3);
             }
 
             ctx.restore();
@@ -1078,162 +487,118 @@
 
         window.addEventListener('resize', renderWaveformCanvas);
 
-        function updatePredictions() {
-            const pwMs = parseFloat(document.getElementById('pulseWidthMs').value) || 10;
-            const hz = parseFloat(document.getElementById('frequencyHz').value) || 1;
-            const periodMs = 1000 / hz;
-            const gapMs = Math.max(20, Math.round(periodMs - pwMs));
-            const bpm = Math.round(hz * 60);
-
-            document.getElementById('bpmLabel').textContent = `${bpm} BPM (Gap: ${gapMs} ms)`;
-            document.getElementById('pulseSplitLabel').textContent = selectedType === 0
-                ? `${(pwMs / 2).toFixed(1)}ms (+) / ${(pwMs / 2).toFixed(1)}ms (-)`
-                : `${pwMs.toFixed(1)}ms total duration`;
-
-            const polyHalf = parseFloat(document.getElementById('polyHalfUs').value) || 500;
-            const acKhz = (1000 / (polyHalf * 2)).toFixed(2);
-            document.getElementById('polyFreqLabel').textContent = `${acKhz} kHz`;
-            const numCycles = Math.round((pwMs * 1000) / polyHalf);
-            document.getElementById('polyCyclesLabel').textContent = `${numCycles} phase flips`;
-
-            const V_stim = 9.0;
-            const d_meters = 0.005;
-            const R_buffer = 9000;
-
-            const E_field = Math.round(V_stim / d_meters);
-            document.getElementById('predField').textContent = `${E_field} V/m`;
-
-            const I_ma = (V_stim / R_buffer) * 1000;
-            document.getElementById('predCurrent').textContent = `~${I_ma.toFixed(1)} mA`;
-
-            const Q_total_uC = I_ma * pwMs;
-            document.getElementById('predCharge').textContent = `${Q_total_uC.toFixed(1)} µC`;
-
-            const dutyPct = ((pwMs / periodMs) * 100).toFixed(2);
-            document.getElementById('predDuty').textContent = `${dutyPct}%`;
-
-            const energy_uJ = Math.round(V_stim * I_ma * pwMs);
-            document.getElementById('predEnergy').textContent = `~${energy_uJ} µJ / beat`;
-
-            const badge = document.getElementById('chargeBalanceBadge');
-            const bioText = document.getElementById('bioGuidanceText');
-
-            if (selectedType === 0) {
-                document.getElementById('predChargeSplit').textContent = `+${(Q_total_uC / 2).toFixed(1)}µC / -${(Q_total_uC / 2).toFixed(1)}µC`;
-                badge.textContent = '✓ 100% Charge Balanced';
-                badge.style.color = '#34d399';
-                bioText.innerHTML = '<strong>Biphasic Symmetrical Pacing:</strong> Reverses double-layer polarization after 50% of the pulse. This neutralizes electrolysis byproducts, prevents electrode erosion, and maintains cell viability over multi-hour experiments.';
-                document.getElementById('waveSubtitle').textContent = 'Biphasic Symmetrical (+9V / -9V)';
-            } else if (selectedType === 1) {
-                document.getElementById('predChargeSplit').textContent = `${numCycles} balanced reversals`;
-                badge.textContent = '✓ 100% High-Freq Balanced';
-                badge.style.color = '#38bdf8';
-                bioText.innerHTML = `<strong>Polyphasic AC Pacing (${acKhz} kHz):</strong> Rapid square-wave polarity reversal lowers the cellular action-potential excitation threshold while virtually eliminating electrode polarization.`;
-                document.getElementById('waveSubtitle').textContent = `Polyphasic AC (${acKhz} kHz Burst)`;
-            } else if (selectedType === 2) {
-                document.getElementById('predChargeSplit').textContent = `Cycle balanced every 2 beats`;
-                badge.textContent = '✓ Net Cycle Balanced';
-                badge.style.color = '#818cf8';
-                bioText.innerHTML = '<strong>Alternating Polarity:</strong> Consecutive beats switch polarity between +9V and -9V. Yields net zero DC charge transfer over even numbers of pulses.';
-                document.getElementById('waveSubtitle').textContent = 'Alternating Polarity (+9V on beat N, -9V on beat N+1)';
-            } else {
-                document.getElementById('predChargeSplit').textContent = `Unbalanced (+${Q_total_uC.toFixed(1)} µC DC)`;
-                badge.textContent = '⚠ Net DC Accumulation';
-                badge.style.color = '#f59e0b';
-                bioText.innerHTML = '<strong style="color: #f59e0b;">Monophasic Alert:</strong> Direct current without reversal triggers Faradaic water oxidation/reduction. Use only for short-duration threshold determination, not chronic pacing.';
-                document.getElementById('waveSubtitle').textContent = 'Monophasic DC (+9V constant)';
-            }
-
-            if (selectedMode === 2) {
-                const rPMin = document.getElementById('randPulseMin').value;
-                const rPMax = document.getElementById('randPulseMax').value;
-                const rGMin = document.getElementById('randGapMin').value;
-                const rGMax = document.getElementById('randGapMax').value;
-                const minBpm = Math.round(60000 / (parseFloat(rPMax) + parseFloat(rGMax)));
-                const maxBpm = Math.round(60000 / (parseFloat(rPMin) + parseFloat(rGMin)));
-                document.getElementById('randSummaryLabel').textContent = `Predicted Rate: ~${minBpm} – ${maxBpm} BPM (Arrhythmia Model)`;
-            }
-        }
-
-        // Selection handlers
+        // --- UI Event Listeners ---
         document.querySelectorAll('.type-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                document.querySelectorAll('.type-btn').forEach(b => {
+                    b.className = 'type-btn px-3 py-2.5 rounded-xl border text-left transition cursor-pointer bg-slate-800/60 border-slate-700 text-slate-300 hover:border-slate-600';
+                });
+                btn.className = 'type-btn active px-3 py-2.5 rounded-xl border text-left transition cursor-pointer bg-emerald-500/15 border-emerald-500 text-emerald-300';
                 selectedType = parseInt(btn.dataset.type, 10);
+
                 document.getElementById('monoWarning').classList.toggle('hidden', selectedType !== 3);
                 document.getElementById('polyControl').classList.toggle('hidden', selectedType !== 1);
-                updatePredictions();
                 renderWaveformCanvas();
             });
         });
 
         document.getElementById('modeNormalBtn').addEventListener('click', () => {
             selectedMode = 1;
-            document.getElementById('modeNormalBtn').classList.add('active');
-            document.getElementById('modeRandomBtn').classList.remove('active');
+            document.getElementById('modeNormalBtn').className = 'py-2 rounded-lg text-xs font-semibold bg-slate-800 text-white shadow cursor-pointer';
+            document.getElementById('modeRandomBtn').className = 'py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white cursor-pointer';
             document.getElementById('normalInputs').classList.remove('hidden');
             document.getElementById('randomInputs').classList.add('hidden');
-            updatePredictions();
-            renderWaveformCanvas();
         });
 
         document.getElementById('modeRandomBtn').addEventListener('click', () => {
             selectedMode = 2;
-            document.getElementById('modeRandomBtn').classList.add('active');
-            document.getElementById('modeNormalBtn').classList.remove('active');
+            document.getElementById('modeRandomBtn').className = 'py-2 rounded-lg text-xs font-semibold bg-slate-800 text-white shadow cursor-pointer';
+            document.getElementById('modeNormalBtn').className = 'py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white cursor-pointer';
             document.getElementById('randomInputs').classList.remove('hidden');
             document.getElementById('normalInputs').classList.add('hidden');
-            updatePredictions();
-            renderWaveformCanvas();
         });
 
-        ['pulseWidthMs', 'frequencyHz', 'polyHalfUs', 'randPulseMin', 'randPulseMax', 'randGapMin', 'randGapMax'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('input', () => {
-                    updatePredictions();
-                    renderWaveformCanvas();
-                });
-            }
-        });
+        function updateTimingLabels() {
+            const pw = parseFloat(document.getElementById('pulseWidthMs').value) || 10;
+            const hz = parseFloat(document.getElementById('frequencyHz').value) || 1;
+            const periodMs = 1000 / hz;
+            const gapMs = Math.max(20, Math.round(periodMs - pw));
+            const bpm = Math.round(hz * 60);
+            document.getElementById('bpmLabel').textContent = `${bpm} BPM (Gap: ${gapMs} ms)`;
 
-        // Universal Command Sender (HTTP vs Web Serial)
-        async function sendCommand(obj) {
-            if (isHttpMode) {
-                try {
-                    let url = '';
-                    if (obj.cmd === 'config') {
-                        url = `/api/config?mode=${obj.mode}&type=${obj.type}&pulse_us=${obj.pulse_us}&gap_ms=${obj.gap_ms}&poly_us=${obj.poly_us}&rp_min=${obj.rp_min}&rp_max=${obj.rp_max}&rg_min=${obj.rg_min}&rg_max=${obj.rg_max}`;
-                    } else if (obj.cmd === 'manual') {
-                        url = `/api/manual?pulse_us=${obj.pulse_us}`;
-                    } else if (obj.cmd === 'reset') {
-                        url = '/api/reset';
-                    } else if (obj.cmd === 'ping') {
-                        lastPingSentTime = performance.now();
-                        url = '/api/ping';
-                    } else if (obj.cmd === 'led_test') {
-                        url = '/api/led_test';
-                    } else if (obj.cmd === 'led_config') {
-                        url = `/api/led_config?pin=${obj.pin}&active_low=${obj.active_low}`;
-                    }
-                    if (url) {
-                        appendSystemLog(`HTTP → ${url}`);
-                        const res = await fetch(url);
-                        const data = await res.json();
-                        handleTelemetryLine(JSON.stringify(data));
-                    }
-                } catch (e) {
-                    appendSystemLog(`HTTP Error: ${e.message}`, true);
-                }
-            } else {
-                if (!writer) return;
-                const line = JSON.stringify(obj) + '\n';
-                appendSystemLog(`TX → ${line.trim()}`);
-                await writer.write(line);
-            }
+            const polyHalf = parseFloat(document.getElementById('polyHalfUs').value) || 500;
+            const acKhz = (1000 / (polyHalf * 2)).toFixed(2);
+            document.getElementById('polyFreqLabel').textContent = `${acKhz} kHz`;
         }
 
+        document.getElementById('pulseWidthMs').addEventListener('input', () => { updateTimingLabels(); renderWaveformCanvas(); });
+        document.getElementById('frequencyHz').addEventListener('input', () => { updateTimingLabels(); renderWaveformCanvas(); });
+        document.getElementById('polyHalfUs').addEventListener('input', () => { updateTimingLabels(); renderWaveformCanvas(); });
+
+        // --- Web Serial Connection ---
+        connectBtn.addEventListener('click', async () => {
+            if (isConnected) {
+                await disconnectSerial();
+                return;
+            }
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+
+                const textEncoder = new TextEncoderStream();
+                textEncoder.readable.pipeTo(port.writable);
+                writer = textEncoder.writable.getWriter();
+
+                const textDecoder = new TextDecoderStream();
+                port.readable.pipeTo(textDecoder.writable);
+                reader = textDecoder.readable.getReader();
+
+                isConnected = true;
+                setConnectionUI(true);
+                appendSystemLog('Connected to ESP32-C3 over USB Serial (115200 baud).');
+                readSerialLoop();
+                // Request initial handshake status from ESP32-C3
+                await sendJson({ cmd: 'status' });
+            } catch (err) {
+                appendSystemLog(`Connection cancelled or failed: ${err.message}`, true);
+            }
+        });
+
+        async function disconnectSerial() {
+            try {
+                if (isRunning) await sendJson({ cmd: 'config', mode: 0 });
+                if (reader) { await reader.cancel(); reader = null; }
+                if (writer) { await writer.close(); writer = null; }
+                if (port) { await port.close(); port = null; }
+            } catch (_) { }
+            isConnected = false;
+            isRunning = false;
+            stopSessionTimer();
+            setConnectionUI(false);
+            appendSystemLog('Disconnected from USB.');
+        }
+
+        function setConnectionUI(connected) {
+            const dot = document.getElementById('statusDot');
+            const txt = document.getElementById('statusText');
+            if (connected) {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+                txt.textContent = 'Connected (USB)';
+                connectBtn.textContent = 'Disconnect';
+                connectBtn.className = 'px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-sm border border-slate-700 transition cursor-pointer';
+            } else {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500';
+                txt.textContent = 'Disconnected';
+                connectBtn.textContent = 'Connect USB';
+                connectBtn.className = 'px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm transition cursor-pointer';
+            }
+            startBtn.disabled = !connected;
+            stopBtn.disabled = !connected;
+            manualBtn.disabled = !connected;
+            applyBtn.disabled = !connected;
+        }
+
+        // --- Serial Command Builder ---
         function buildConfigPayload(targetMode) {
             const pwMs = parseFloat(document.getElementById('pulseWidthMs').value) || 10;
             const hz = parseFloat(document.getElementById('frequencyHz').value) || 1;
@@ -1253,8 +618,15 @@
             };
         }
 
+        async function sendJson(obj) {
+            if (!writer) return;
+            const line = JSON.stringify(obj) + '\n';
+            appendSystemLog(`TX → ${line.trim()}`);
+            await writer.write(line);
+        }
+
         startBtn.addEventListener('click', async () => {
-            await sendCommand(buildConfigPayload(selectedMode));
+            await sendJson(buildConfigPayload(selectedMode));
             if (!sessionStartLocal) {
                 sessionStartLocal = Date.now();
                 startSessionTimer();
@@ -1262,283 +634,141 @@
         });
 
         stopBtn.addEventListener('click', async () => {
-            await sendCommand({ cmd: 'config', mode: 0 });
+            await sendJson({ cmd: 'config', mode: 0 });
             stopSessionTimer();
         });
 
         applyBtn.addEventListener('click', async () => {
             const activeMode = isRunning ? selectedMode : 0;
-            await sendCommand(buildConfigPayload(activeMode));
+            await sendJson(buildConfigPayload(activeMode));
             appendSystemLog('Updated stimulation parameters.');
         });
 
         manualBtn.addEventListener('click', async () => {
             const pwMs = parseFloat(document.getElementById('pulseWidthMs').value) || 10;
-            await sendCommand({ cmd: 'manual', pulse_us: Math.round(pwMs * 1000) });
+            await sendJson({ cmd: 'manual', pulse_us: Math.round(pwMs * 1000) });
         });
 
-        pingBtn.addEventListener('click', async () => {
-            lastPingSentTime = performance.now();
-            await sendCommand({ cmd: 'ping' });
-        });
-
-        testLedBtn.addEventListener('click', async () => {
-            await sendCommand({ cmd: 'led_test' });
-        });
-
-        togglePolarityBtn.addEventListener('click', async () => {
-            currentLedActiveLow = !currentLedActiveLow;
-            await sendCommand({ cmd: 'led_config', pin: currentLedPin, active_low: currentLedActiveLow ? 1 : 0 });
-            document.getElementById('ledPolarityText').textContent = currentLedActiveLow ? 'Active-LOW' : 'Active-HIGH';
-        });
-
-        togglePinBtn.addEventListener('click', async () => {
-            currentLedPin = (currentLedPin === 8) ? 2 : 8;
-            await sendCommand({ cmd: 'led_config', pin: currentLedPin, active_low: currentLedActiveLow ? 1 : 0 });
-            document.getElementById('ledPinText').textContent = `GPIO ${currentLedPin}`;
-        });
+        // --- Serial Reader Loop ---
+        async function readSerialLoop() {
+            let buffer = '';
+            try {
+                while (port && port.readable) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    if (value) {
+                        buffer += value;
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop();
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (trimmed.startsWith('{')) {
+                                handleTelemetryLine(trimmed);
+                            } else if (trimmed.length > 0) {
+                                appendSystemLog(`RAW ← ${trimmed}`);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                if (isConnected) {
+                    appendSystemLog(`Serial read error: ${err.message}`, true);
+                }
+            }
+        }
 
         function handleTelemetryLine(line) {
             try {
                 const data = JSON.parse(line);
                 if (data.event === 'ack') {
-                    appendSystemLog(`RX ← ESP32 ACK: Accepted`);
-                    return;
-                }
-                if (data.event === 'pong') {
-                    const rtt = Math.round(performance.now() - lastPingSentTime);
-                    document.getElementById('diagnosticFeedback').innerHTML =
-                        `<span style="color: #34d399;">✓ Loop Confirmed Running!</span> RTT: ${rtt} ms | Firmware Uptime: ${(data.uptime_ms / 1000).toFixed(1)}s | Pulses: ${data.pulses}`;
-                    setLoopStatus(true, `Running (${rtt}ms)`);
-                    appendSystemLog(`RX ← Pong: RTT=${rtt}ms, Uptime=${(data.uptime_ms / 1000).toFixed(1)}s`);
-                    return;
-                }
-                if (data.event === 'heartbeat') {
-                    setLoopStatus(true, 'Standby Ticker');
-                    return;
-                }
-                if (data.event === 'led_status') {
-                    currentLedPin = data.pin;
-                    currentLedActiveLow = data.active_low === 1;
-                    document.getElementById('ledPinText').textContent = `GPIO ${currentLedPin}`;
-                    document.getElementById('ledPolarityText').textContent = currentLedActiveLow ? 'Active-LOW' : 'Active-HIGH';
-                    document.getElementById('diagnosticFeedback').innerHTML =
-                        `<span style="color: #34d399;">✓ LED Confirmed:</span> Pin ${currentLedPin}, ${currentLedActiveLow ? 'Active-LOW' : 'Active-HIGH'}`;
-                    appendSystemLog(`RX ← LED configured: GPIO ${currentLedPin}, Active-${currentLedActiveLow ? 'LOW' : 'HIGH'}`);
+                    appendSystemLog(`RX ← ESP32 confirmed command`);
                     return;
                 }
                 if (data.event === 'status') {
                     isRunning = data.mode !== 0;
-                    appendSystemLog(`RX ← Status: mode=${data.mode}, pulse=${(data.pulse_us / 1000).toFixed(1)}ms, count=${data.count}`);
+                    appendSystemLog(`RX ← Status: mode=${data.mode}, pulse=${(data.pulse_us / 1000).toFixed(1)}ms, gap=${data.gap_ms}ms, count=${data.count}`);
                     const ind = document.getElementById('pulseIndicator');
                     if (isRunning) {
-                        ind.style.background = '#10b981';
-                        ind.style.borderColor = '#34d399';
-                        setLoopStatus(true, 'Pacing Active');
+                        ind.className = 'w-4 h-4 rounded-full bg-emerald-400';
                         startWaveLoop();
                     } else {
-                        ind.style.background = '#1e293b';
-                        ind.style.borderColor = '#334155';
-                        setLoopStatus(true, 'Pacing Paused');
+                        ind.className = 'w-4 h-4 rounded-full bg-slate-700';
                         renderWaveformCanvas();
                     }
                     return;
                 }
+
                 if (data.event === 'pulse') {
-                    handlePulseEvent(data);
+                    const durMs = (data.dur_us / 1000).toFixed(2);
+                    document.getElementById('pulseCountDisplay').textContent = data.id;
+                    document.getElementById('actualDurDisplay').textContent = `${durMs} ms`;
+
+                    // Push into rolling oscilloscope buffer and ensure animation loop runs
+                    recentPulses.push({
+                        receivedAt: performance.now(),
+                        durUs: data.dur_us,
+                        type: data.type,
+                        pol: data.pol !== undefined ? data.pol : 1,
+                        polyUs: data.poly_us || 500
+                    });
+                    startWaveLoop();
+
+                    // Trigger beat visual flash
+                    const ind = document.getElementById('pulseIndicator');
+                    ind.classList.remove('beat-active');
+                    void ind.offsetWidth;
+                    ind.classList.add('beat-active', 'bg-emerald-400');
+
+                    const isoTime = new Date().toISOString();
+                    telemetryRows.push({
+                        id: data.id,
+                        isoTime,
+                        deviceTimeMs: data.t_ms,
+                        type: TYPE_NAMES[data.type] || data.type,
+                        durationMs: durMs,
+                        gapMs: data.gap_ms
+                    });
+
+                    appendPulseLog(data.id, isoTime, TYPE_NAMES[data.type], durMs, data.gap_ms);
                 }
             } catch (_) { }
         }
 
-        function handlePulseEvent(data) {
-            const durMs = (data.dur_us / 1000).toFixed(2);
-            document.getElementById('pulseCountDisplay').textContent = data.id;
-            document.getElementById('actualDurDisplay').textContent = `${durMs} ms`;
-            setLoopStatus(true, `Beat #${data.id}`);
-
-            recentPulses.push({
-                receivedAt: performance.now(),
-                durUs: data.dur_us,
-                type: data.type,
-                pol: data.pol !== undefined ? data.pol : 1,
-                polyUs: data.poly_us || 500
-            });
-            startWaveLoop();
-
-            const ind = document.getElementById('pulseIndicator');
-            ind.classList.remove('beat-active');
-            void ind.offsetWidth;
-            ind.classList.add('beat-active');
-            ind.style.background = '#10b981';
-
-            const isoTime = new Date().toISOString();
-            telemetryRows.push({
-                id: data.id,
-                isoTime,
-                deviceTimeMs: data.t_ms,
-                type: TYPE_NAMES[data.type] || data.type,
-                durationMs: durMs,
-                gapMs: data.gap_ms
-            });
-
-            appendPulseLog(data.id, isoTime, TYPE_NAMES[data.type], durMs, data.gap_ms);
-            lastReceivedPulseId = Math.max(lastReceivedPulseId, data.id);
-        }
-
+        // --- Logging & CSV Export ---
         function appendSystemLog(msg, isError = false) {
-            if (telemetryRows.length === 0 && logContainer.children.length === 1 && logContainer.firstChild.style?.fontStyle === 'italic') {
+            if (telemetryRows.length === 0 && logContainer.children.length === 1 && logContainer.firstChild.classList?.contains('italic')) {
                 logContainer.innerHTML = '';
             }
             const div = document.createElement('div');
-            div.style.color = isError ? '#f87171' : '#38bdf8';
-            div.style.padding = '2px 0';
+            div.className = isError ? 'text-rose-400 py-0.5' : 'text-sky-400 py-0.5';
             div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
             logContainer.prepend(div);
         }
 
         function appendPulseLog(id, isoTime, typeName, durMs, gapMs) {
-            if (logContainer.firstChild?.style?.fontStyle === 'italic') {
+            if (logContainer.firstChild?.classList?.contains('italic')) {
                 logContainer.innerHTML = '';
             }
             const div = document.createElement('div');
-            div.className = 'log-entry';
-            div.innerHTML = `<span><span style="color: #34d399; font-weight: 600;">#${id}</span> ${typeName} | <span style="color: #fff;">${durMs} ms</span> | Gap: ${gapMs} ms</span><span style="color: var(--text-dim);">${isoTime.split('T')[1].replace('Z', '')}</span>`;
+            div.className = 'text-slate-300 py-0.5 border-b border-slate-800/40 flex justify-between';
+            div.innerHTML = `<span><span class="text-emerald-400 font-semibold">#${id}</span> ${typeName} | <span class="text-white">${durMs} ms</span> | Gap: ${gapMs} ms</span><span class="text-slate-500">${isoTime.split('T')[1].replace('Z', '')}</span>`;
             logContainer.prepend(div);
 
+            // Keep DOM light during multi-hour experiments
             while (logContainer.children.length > 150) {
                 logContainer.removeChild(logContainer.lastChild);
             }
         }
 
-        function setLoopStatus(active, text) {
-            const dot = document.getElementById('loopDot');
-            const txt = document.getElementById('loopText');
-            txt.textContent = `Loop: ${text}`;
-            if (active) {
-                dot.className = 'dot dot-green';
-            } else {
-                dot.className = 'dot dot-amber';
-            }
-        }
-
-        // Wi-Fi HTTP Polling Loop
-        function startHttpPolling() {
-            if (pollingInterval) clearInterval(pollingInterval);
-            pollingInterval = setInterval(async () => {
-                try {
-                    const res = await fetch(`/api/telemetry?last_id=${lastReceivedPulseId}`);
-                    const data = await res.json();
-
-                    if (data.mode !== undefined) {
-                        isRunning = data.mode !== 0;
-                        document.getElementById('pulseCountDisplay').textContent = data.count || lastReceivedPulseId;
-                    }
-
-                    if (data.pulses && data.pulses.length > 0) {
-                        for (const p of data.pulses) {
-                            handlePulseEvent(p);
-                        }
-                    } else if (isRunning) {
-                        setLoopStatus(true, 'Pacing Active');
-                    } else {
-                        setLoopStatus(true, 'Standby Ticker');
-                    }
-                } catch (_) { }
-            }, 180);
-        }
-
-        // Web Serial Fallback (Only used if opened as file://)
-        if (!isHttpMode) {
-            connectBtn.classList.remove('hidden');
-            document.getElementById('connTag').textContent = 'USB Serial Mode';
-            document.getElementById('statusText').textContent = 'Disconnected';
-            document.getElementById('statusDot').className = 'dot dot-red';
-
-            connectBtn.addEventListener('click', async () => {
-                if (isConnected) {
-                    await disconnectSerial();
-                    return;
-                }
-                try {
-                    port = await navigator.serial.requestPort();
-                    await port.open({ baudRate: 115200 });
-                    const textEncoder = new TextEncoderStream();
-                    textEncoder.readable.pipeTo(port.writable);
-                    writer = textEncoder.writable.getWriter();
-                    const textDecoder = new TextDecoderStream();
-                    port.readable.pipeTo(textDecoder.writable);
-                    reader = textDecoder.readable.getReader();
-
-                    isConnected = true;
-                    connectBtn.textContent = 'Disconnect';
-                    connectBtn.style.background = '#334155';
-                    document.getElementById('statusDot').className = 'dot dot-green';
-                    document.getElementById('statusText').textContent = 'USB Connected';
-                    appendSystemLog('Connected to ESP32-C3 over USB CDC.');
-                    readSerialLoop();
-                    await sendCommand({ cmd: 'status' });
-                } catch (e) {
-                    appendSystemLog(`Connection cancelled: ${e.message}`, true);
-                }
-            });
-
-            async function disconnectSerial() {
-                try {
-                    if (isRunning) await sendCommand({ cmd: 'config', mode: 0 });
-                    if (reader) { await reader.cancel(); reader = null; }
-                    if (writer) { await writer.close(); writer = null; }
-                    if (port) { await port.close(); port = null; }
-                } catch (_) { }
-                isConnected = false;
-                isRunning = false;
-                stopSessionTimer();
-                connectBtn.textContent = 'Connect USB';
-                connectBtn.style.background = 'var(--primary)';
-                document.getElementById('statusDot').className = 'dot dot-red';
-                document.getElementById('statusText').textContent = 'Disconnected';
-            }
-
-            async function readSerialLoop() {
-                let buffer = '';
-                try {
-                    while (port && port.readable) {
-                        const { value, done } = await reader.read();
-                        if (done) break;
-                        if (value) {
-                            buffer += value;
-                            const lines = buffer.split('\n');
-                            buffer = lines.pop();
-                            for (const line of lines) {
-                                const trimmed = line.trim();
-                                if (trimmed.startsWith('{')) {
-                                    handleTelemetryLine(trimmed);
-                                }
-                            }
-                        }
-                    }
-                } catch (_) { }
-            }
-        } else {
-            // Direct Wi-Fi Mode Initialization
-            appendSystemLog('Direct Web Interface served by ESP32-C3.');
-            startHttpPolling();
-            // Ping firmware immediately to measure latency
-            setTimeout(() => {
-                lastPingSentTime = performance.now();
-                sendCommand({ cmd: 'ping' });
-            }, 300);
-        }
-
         document.getElementById('clearLogBtn').addEventListener('click', () => {
             telemetryRows = [];
             recentPulses = [];
-            logContainer.innerHTML = '<div style="color: var(--text-dim); font-style: italic;">Log cleared.</div>';
+            logContainer.innerHTML = '<div class="text-slate-500 italic">Log cleared.</div>';
             document.getElementById('pulseCountDisplay').textContent = '0';
             sessionStartLocal = null;
-            lastReceivedPulseId = 0;
             document.getElementById('elapsedDisplay').textContent = '00:00';
             renderWaveformCanvas();
-            sendCommand({ cmd: 'reset' });
+            if (isConnected) sendJson({ cmd: 'reset' });
         });
 
         document.getElementById('exportCsvBtn').addEventListener('click', () => {
@@ -1557,6 +787,7 @@
             URL.revokeObjectURL(url);
         });
 
+        // --- Session Elapsed Clock ---
         function startSessionTimer() {
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
@@ -1573,7 +804,8 @@
             timerInterval = null;
         }
 
-        updatePredictions();
+        // Initial render
+        updateTimingLabels();
         renderWaveformCanvas();
     </script>
 </body>
